@@ -1,0 +1,303 @@
+{
+  "name": "Social media Content Publish",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "social-publish",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        -576,
+        -96
+      ],
+      "id": "0f7f636d-08a2-47bc-916b-be957d38b1b9",
+      "name": "Webhook",
+      "webhookId": "c3999655-adfe-4214-8188-a4d9c257831f",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "Webhook Header Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "412a6c43-a1e0-4908-8e9e-77e79b830614",
+              "leftValue": "={{ $json.body.include_image }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -352,
+        -96
+      ],
+      "id": "0c1c00ab-43bf-4da0-be0c-3f3438da2b4d",
+      "name": "Image included?"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "body.image_base64",
+        "binaryPropertyName": "image",
+        "options": {
+          "fileName": "={{ 'post-image.' + String($json.body.image_mime || 'image/png').split('/')[1] }}",
+          "mimeType": "={{ $json.body.image_mime }}"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        -128,
+        -192
+      ],
+      "id": "97ab813c-06a2-4260-b413-c57eedb355cb",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "user": "YOUR_UPLOAD_POST_PROFILE",
+        "platform": "={{ [$('Webhook').item.json.body.platform] }}",
+        "title": "={{ $('Webhook').item.json.body.final_text }}",
+        "altText": "={{ $('Webhook').item.json.body.alt_text }}",
+        "photos": "image",
+        "uploadAsync": false
+      },
+      "type": "n8n-nodes-upload-post.uploadPost",
+      "typeVersion": 1,
+      "position": [
+        96,
+        -192
+      ],
+      "id": "771746ae-7c3d-44bc-9970-f5871c4359fa",
+      "name": "Upload photos",
+      "credentials": {
+        "uploadPostApi": {
+          "id": "",
+          "name": "Upload-Post account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "operation": "uploadText",
+        "user": "YOUR_UPLOAD_POST_PROFILE",
+        "platform": "={{ [$json.body.platform] }}",
+        "title": "={{ $json.body.final_text }}",
+        "uploadAsync": false
+      },
+      "type": "n8n-nodes-upload-post.uploadPost",
+      "typeVersion": 1,
+      "position": [
+        96,
+        0
+      ],
+      "id": "c55a569a-bf90-4fbd-900b-161335ee5d1f",
+      "name": "Post text only",
+      "credentials": {
+        "uploadPostApi": {
+          "id": "",
+          "name": "Upload-Post account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a3c20cdf-1766-4f8d-a771-52845de6ce1b",
+              "name": "success",
+              "value": "={{ $json.results ? $json.r.success === true : ($json.success === true && !!$json.request_id) }}",
+              "type": "boolean"
+            },
+            {
+              "id": "ff3df696-e9a7-4278-a3e9-caa56d92afa3",
+              "name": "post_url",
+              "value": "={{ $json.r.post_url ?? $json.r.url ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "f6bb3362-c61c-4349-bcd1-71dbe62386e5",
+              "name": "error",
+              "value": "={{ $json.r.error ?? ($json.r.skipped ? 'This account is not connected in Upload-Post.' : (typeof $json.error === 'string' ? $json.error : ($json.error?.message ?? ''))) }}",
+              "type": "string"
+            },
+            {
+              "id": "599c0730-7424-4f2f-a381-8dfc22e8e1f7",
+              "name": "message",
+              "value": "={{ $json.results ? 'Posted to ' + $('Webhook').item.json.body.platform + '.' : ($json.request_id ? 'Upload-Post is still processing the post. Check your Upload-Post dashboard.' : '') }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        544,
+        -96
+      ],
+      "id": "fe72739a-e511-411b-87b3-774aaac74d67",
+      "name": "Build publish result"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        768,
+        -96
+      ],
+      "id": "8b548feb-59c1-4e1f-912b-db11d5104c2a",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "60c48ae3-3ee9-4eb7-99f8-a2a5255d2215",
+              "name": "r",
+              "value": "={{ (Array.isArray($json.results) ? $json.results.find(i => i.platform === $('Webhook').item.json.body.platform) : $json.results?.[$('Webhook').item.json.body.platform]) ?? {} }}",
+              "type": "object"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        320,
+        -96
+      ],
+      "id": "e58a6736-1497-4b5b-8ad0-1345cff7c1ed",
+      "name": "Find platform result"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Image included?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Image included?": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Post text only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Upload photos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post text only": {
+      "main": [
+        [
+          {
+            "node": "Find platform result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload photos": {
+      "main": [
+        [
+          {
+            "node": "Find platform result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build publish result": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find platform result": {
+      "main": [
+        [
+          {
+            "node": "Build publish result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "nodeGroups": [],
+  "tags": []
+}

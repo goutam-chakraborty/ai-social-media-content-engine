@@ -1,0 +1,17 @@
+{
+  "title": "Still copying leads into spreadsheets by hand?",
+  "alternatives": [
+    "5 hours a week lost to one boring task",
+    "The cheapest hire you'll ever make isn't a person"
+  ],
+  "content": "Most small businesses lose hours every week to copy-paste work...\n\nA simple automation can capture every enquiry and reply in seconds.\n\nWhat would you automate first?",
+  "hashtags": ["#AIAutomation", "#SmallBusiness", "#Productivity"],
+  "sources": [
+    { "title": "Example source title", "url": "https://example.com/article" }
+  ],
+  "platform": "linkedin",
+  "has_image": true,
+  "image_base64": "<base64 image data, shortened>",
+  "image_mime": "image/png",
+  "alt_text": "Business owner relaxing while documents organise themselves"
+}
